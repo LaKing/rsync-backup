@@ -20,6 +20,15 @@ fi
 ## logs about the whole process
     LOG=$0.log
 
+
+## function that will timestamp
+function log {
+
+    NOW=$(date +%Y-%m-%d-%H:%M:%S)
+    echo "$NOW - $1" >> $LOG
+
+}
+
 ## do a test-only/measure disk usage - or - do a full backup?
 if [ -z "$BACKUP" ]
 then
@@ -53,13 +62,6 @@ else
     fi
 fi
 
-## function that will timestamp
-function log {
-
-    NOW=$(date +%Y-%m-%d-%H:%M:%S)
-    echo "$NOW - $1" >> $LOG
-
-}
 
 
 ## local backup from a local folder
