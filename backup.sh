@@ -144,7 +144,7 @@ function remote_backup {
     for i in $backup_dirs
     do
         backup_log=$backup_target/$(basename $i).log
-        echo $backup_host:$i 
+        echo $backup_hostname:$i 
         mkdir -p $backup_target/$i
         du -hs $backup_target/$i
         log "@  $backup_host:$i"
