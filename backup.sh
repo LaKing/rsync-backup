@@ -139,9 +139,7 @@ function remote_backup {
     backup_proxy="$1"
     backup_host="$2"
     cmd="ssh $backup_host hostname"
-    echo CMD:$cmd
     backup_hostname="$(ssh $backup_proxy $cmd)"
-    echo hostname:$backup_hostname
     backup_dirs="${@:3}"
     backup_target=$BACKUP_PATH/$backup_hostname
 
