@@ -99,9 +99,10 @@ function local_backup {
 ## local backup from a server
 function server_backup {
 
-    backup_host="$(ssh $1 hostname)"
+    backup_host="$1"
+    backup_hostname="$(ssh $1 hostname)"
     backup_dirs="${@:2}"
-    backup_target=$BACKUP_PATH/$backup_host
+    backup_target=$BACKUP_PATH/$backup_hostname
 
     for i in $backup_dirs
     do
@@ -137,7 +138,8 @@ function remote_backup {
 
     backup_proxy="$1"
     backup_host="$2"
-    backup_hostname="$(ssh $backup_proxy 'ssh $backup_host hostname')"
+    cmd="ssh $backup_host hostname"
+    backup_hostname="$(ssh $backup_proxy $cmd)"
     backup_dirs="${@:3}"
     backup_target=$BACKUP_PATH/$backup_hostname
 
