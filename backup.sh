@@ -18,7 +18,7 @@ then
 fi
 
 ## logs about the whole process
-    LOG=$0.log
+    LOG=/var/log
 
 
 ## function that will timestamp
@@ -63,7 +63,6 @@ else
 fi
 
 
-
 ## local backup from a local folder
 function local_backup {
 
@@ -72,14 +71,15 @@ function local_backup {
 
     for i in $backup_dirs
     do
-        backup_log=$backup_target/$(basename $i).log
+        mkdir -p $LOG/backup/$HOSTNAME
+        backup_log=$LOG/backup/$HOSTNAME/log
         echo $(hostname):$i
         mkdir -p $backup_target/$(dirname $i)
 
         du -hs $backup_target/$i
         du -hs $i
 
-        log "@ $(hostname):$i"
+        log "local_backup $(hostname):$i"
 
         if $BACKUP
         then
@@ -100,26 +100,29 @@ function local_backup {
 function server_backup {
 
     backup_host="$1"
-    backup_hostname="$(ssh $1 hostname)"
+    backup_hostname="$(ssh -n $1 hostname)"
     backup_dirs="${@:2}"
     backup_target=$BACKUP_PATH/$backup_hostname
 
     for i in $backup_dirs
     do
-        backup_log=$backup_target/$(basename $i).log
+        
+        mkdir -p $LOG/backup/$backup_hostname/$i
+        backup_log=$LOG/backup/$backup_hostname/$i/log
+        
         echo $backup_host:$i
         mkdir -p $backup_target/$i
         du -hs $backup_target/$i
-        log "@  $backup_host:$i"
+        logs "backup @  $backup_host:$i"
 
         cmd='echo "$(du -hs '$i') $(hostname)/'$i'"'
-        if ssh -o BatchMode=yes $backup_host "$cmd"
+        if ssh -n -o BatchMode=yes $backup_host "$cmd"
         then
             if $BACKUP
             then
                 if rsync --delete -avze ssh $backup_host:/$i $backup_target/$(dirname $i) >> $backup_log
                 then
-                    log "done  $backup_host @ $i"
+                    log "backup done  $backup_host @ $i"
                 else
                     log "ERROR $backup_host @ $i"
                     echo "ERROR $backup_host @ $i"
@@ -138,26 +141,28 @@ function remote_backup {
 
     backup_proxy="$1"
     backup_host="$2"
-    cmd="ssh $backup_host hostname"
-    backup_hostname="$(ssh $backup_proxy $cmd)"
+    cmd="ssh -n $backup_host hostname"
+    backup_hostname="$(ssh -n $backup_proxy $cmd)"
     backup_dirs="${@:3}"
     backup_target=$BACKUP_PATH/$backup_hostname
 
     for i in $backup_dirs
     do
-        backup_log=$backup_target/$(basename $i).log
+        mkdir -p $LOG/backup/$backup_hostname/
+        backup_log=$LOG/backup/$backup_hostname/$i/log
+        
         echo $backup_hostname:$i 
         mkdir -p $backup_target/$i
         du -hs $backup_target/$i
-        log "@  $backup_host:$i"
+        logs "backup @  $backup_host:$i"
 
         cmd='echo "$(du -hs '$i') $(hostname)/'$i'"'
-        if ssh -o BatchMode=yes $backup_proxy "ssh -o BatchMode=yes $backup_host '$cmd'"
+        if ssh -o BatchMode=yes $backup_proxy "ssh -n -o BatchMode=yes $backup_host '$cmd'"
         then
 
             if $BACKUP
             then
-                if rsync --delete -avz -e "ssh -A $backup_proxy ssh" $backup_host:/$i $backup_target/$(dirname $i) >> $backup_log
+                if rsync --delete -avz -e "ssh -n -A $backup_proxy ssh -n" $backup_host:/$i $backup_target/$(dirname $i) >> $backup_log
                 then
                     log "done  $backup_host @ $i"
                 else
@@ -172,6 +177,8 @@ function remote_backup {
     done
     echo ''
 }
+
+
 
 ## examples:
 ## create a local backup
